@@ -131,6 +131,7 @@ typedef enum {
     KEY_ICONIFY,
     KEY_PREVWS,
     KEY_NEXTWS,
+    KEY_MENU,
     KEY_MAX
 } key_enum_t;
 
@@ -262,6 +263,7 @@ struct keys
     { USERKEY_ICONIFY, 0 },
     { USERKEY_PREVWS, 0 },
     { USERKEY_NEXTWS, 0 },
+    { USERKEY_MENU, 0 },
 };
 
 /* All keycodes generating our MODKEY mask. */
@@ -3343,6 +3345,10 @@ void handle_keypress(xcb_key_press_event_t *ev)
 
         case KEY_NEXTWS:
             changeworkspace((curws + 1) % WORKSPACES);
+            break;
+
+        case KEY_MENU:
+            start(MENU);
             break;
 
         default:
