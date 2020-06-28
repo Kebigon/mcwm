@@ -30,7 +30,7 @@
  *
  * Can be set from command line with "-t program".
  */
-#define TERMINAL "urxvt"
+#define TERMINAL "alacritty"
 
 /*
  * Do we allow windows to be iconified? Set to true if you want this
