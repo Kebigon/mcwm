@@ -3,59 +3,9 @@
 mcwm \- MC's Window Manager for X11.
 .SH SYNOPSIS
 .B mcwm
-[ 
-.B \-b 
-width ] 
-[ 
-.B \-i
-] 
-[ 
-.B \-s
-.I snapmargin
-]
-[ 
-.B \-t 
-.I terminal-program
-] 
-[ 
-.B \-f 
-.I colour
-] 
-[ 
-.B \-u 
-.I colour
-] 
-[ 
-.B \-x
-.I colour
-]
 
 .SH DESCRIPTION
 .B mcwm\fP is a window manager for the X Window System.
-
-.SH OPTIONS
-.PP
-\-b width sets border width to this many pixels.
-.PP
-\-i turns on icons/hidden windows. 
-.B Please note
-that there is no way from mcwm to get a hidden window back! You have
-to use an external program such as a panel or the mcicon or 9icon
-scripts (see below) to get the window mapped again.
-.PP
-\-s snapmargin turns on window snapping to borders and other windows
-within snapmargin pixels.
-.PP
-\-t urxvt will start urxvt when MODKEY + Return is pressed. Change to
-your prefered terminal program or something else entirely.
-.PP
-\-f colour sets border colour for focused window to a named colour,
-such as "red".
-.PP
-\-u colour sets border colour for unfocused windows.
-.PP
-\-x colour sets border colour for fixed windows, that is, windows that
-are visible on all workspaces.
 
 .SH USE
 Nota bene: For mcwm to be at all useful you need to know how what keys
@@ -215,9 +165,6 @@ xrdb \-load ~/.Xresources
 
 # Start window manager in the background. If it dies, X still lives.
 mcwm &
-
-# If you want to allow windows to be hidden, use this instead:
-# mcwm -i &
 
 # Start a terminal in the foreground. If this dies, X dies.
 exec urxvt

@@ -206,6 +206,9 @@ struct client *lastfocuswin;        /* Last focused window. NOTE! Only
 struct item *winlist = NULL;    /* Global list of all client windows. */
 struct item *monlist = NULL;    /* List of all physical monitor outputs. */
 int mode = 0;                   /* Internal mode, such as move or resize */
+uint32_t focuscol;              /* Focused border colour. */
+uint32_t unfocuscol;            /* Unfocused border colour.  */
+uint32_t fixedcol;              /* Fixed windows border colour. */
 
 /*
  * Workspace list: Every workspace has a list of all visible
@@ -276,18 +279,6 @@ struct modkeycodes
     NULL,
     0
 };
-
-/* Global configuration. */
-struct conf
-{
-    int borderwidth;            /* Do we draw borders? If so, how large? */
-    int snapmargin;             /* Do we have snap margin? If so, how large? */
-    char *terminal;             /* Path to terminal to start. */
-    uint32_t focuscol;          /* Focused border colour. */
-    uint32_t unfocuscol;        /* Unfocused border colour.  */
-    uint32_t fixedcol;          /* Fixed windows border colour. */
-    bool allowicons;            /* Allow windows to be unmapped. */
-} conf;
 
 xcb_atom_t atom_desktop;        /*
                                  * EWMH _NET_WM_DESKTOP hint that says
@@ -372,7 +363,6 @@ static void handle_keypress(xcb_key_press_event_t *ev);
 static void configwin(xcb_window_t win, uint16_t mask, struct winconf wc);
 static void configurerequest(xcb_configure_request_event_t *e);
 static void events(void);
-static void printhelp(void);
 static void sigcatch(int sig);
 static xcb_atom_t getatom(char *atom_name);
 
@@ -697,7 +687,7 @@ void fixwindow(struct client *client, bool setcolour)
         if (setcolour)
         {
             /* Set border color to ordinary focus colour. */
-            values[0] = conf.focuscol;
+            values[0] = focuscol;
             xcb_change_window_attributes(conn, client->id, XCB_CW_BORDER_PIXEL,
                                          values);
         }
@@ -735,7 +725,7 @@ void fixwindow(struct client *client, bool setcolour)
         if (setcolour)
         {
             /* Set border color to fixed colour. */
-            values[0] = conf.fixedcol;
+            values[0] = fixedcol;
             xcb_change_window_attributes(conn, client->id, XCB_CW_BORDER_PIXEL,
                                          values);
         }
@@ -868,7 +858,7 @@ void fitonscreen(struct client *client)
     if (client->maxed)
     {
         client->maxed = false;
-        setborders(client, conf.borderwidth);
+        setborders(client, BORDERWIDTH);
     }
 
     if (NULL == client->monitor)
@@ -935,31 +925,31 @@ void fitonscreen(struct client *client)
      * If the window is larger than our screen, just place it in the
      * corner and resize.
      */
-    if (client->width + conf.borderwidth * 2 > mon_width)
+    if (client->width + BORDERWIDTH * 2 > mon_width)
     {
         client->x = mon_x;
-        client->width = mon_width - conf.borderwidth * 2;;
+        client->width = mon_width - BORDERWIDTH * 2;;
         willmove = true;
         willresize = true;
     }
-    else if (client->x + client->width + conf.borderwidth * 2
+    else if (client->x + client->width + BORDERWIDTH * 2
              > mon_x + mon_width)
     {
-        client->x = mon_x + mon_width - (client->width + conf.borderwidth * 2);
+        client->x = mon_x + mon_width - (client->width + BORDERWIDTH * 2);
         willmove = true;
     }
 
-    if (client->height + conf.borderwidth * 2 > mon_height)
+    if (client->height + BORDERWIDTH * 2 > mon_height)
     {
         client->y = mon_y;
-        client->height = mon_height - conf.borderwidth * 2;
+        client->height = mon_height - BORDERWIDTH * 2;
         willmove = true;
         willresize = true;
     }
-    else if (client->y + client->height + conf.borderwidth * 2
+    else if (client->y + client->height + BORDERWIDTH * 2
              > mon_y + mon_height)
     {
-        client->y = mon_y + mon_height - (client->height + conf.borderwidth
+        client->y = mon_y + mon_height - (client->height + BORDERWIDTH
                                           * 2);
         willmove = true;
     }
@@ -1087,7 +1077,7 @@ struct client *setupwin(xcb_window_t win)
     uint32_t ws;
 
     /* Set default border color. */
-    values[0] = conf.unfocuscol;
+    values[0] = unfocuscol;
     xcb_change_window_attributes(conn, win, XCB_CW_BORDER_PIXEL, values);
 
     /* Subscribe to events we want to know about in this window. */
@@ -1151,7 +1141,7 @@ struct client *setupwin(xcb_window_t win)
 
     PDEBUG("Adding window %d\n", client->id);
 
-    setborders(client, conf.borderwidth);
+    setborders(client, BORDERWIDTH);
 
     /* Get window geometry. */
     if (!getgeom(client->id, &client->x, &client->y, &client->width,
@@ -1892,14 +1882,14 @@ void movelim(struct client *client)
         client->y = mon_y;
     }
 
-    if (client->x + client->width > mon_x + mon_width - conf.borderwidth * 2)
+    if (client->x + client->width > mon_x + mon_width - BORDERWIDTH * 2)
     {
-        client->x = (mon_x + mon_width - conf.borderwidth * 2) - client->width;
+        client->x = (mon_x + mon_width - BORDERWIDTH * 2) - client->width;
     }
 
-    if (client->y + client->height > mon_y + mon_height - conf.borderwidth * 2)
+    if (client->y + client->height > mon_y + mon_height - BORDERWIDTH * 2)
     {
-        client->y = (mon_y + mon_height - conf.borderwidth * 2)
+        client->y = (mon_y + mon_height - BORDERWIDTH * 2)
             - client->height;
     }
 
@@ -2051,7 +2041,7 @@ void setunfocus(xcb_drawable_t win)
     }
 
     /* Set new border colour. */
-    values[0] = conf.unfocuscol;
+    values[0] = unfocuscol;
     xcb_change_window_attributes(conn, win, XCB_CW_BORDER_PIXEL, values);
 
     xcb_flush(conn);
@@ -2117,11 +2107,11 @@ void setfocus(struct client *client)
     /* Set new border colour. */
     if (client->fixed)
     {
-        values[0] = conf.fixedcol;
+        values[0] = fixedcol;
     }
     else
     {
-        values[0] = conf.focuscol;
+        values[0] = focuscol;
     }
 
     xcb_change_window_attributes(conn, client->id, XCB_CW_BORDER_PIXEL,
@@ -2219,15 +2209,15 @@ void resizelim(struct client *client)
         client->width = client->min_width;
     }
 
-    if (client->x + client->width + conf.borderwidth * 2 > mon_x + mon_width)
+    if (client->x + client->width + BORDERWIDTH * 2 > mon_x + mon_width)
     {
-        client->width = mon_width - ((client->x - mon_x) + conf.borderwidth
+        client->width = mon_width - ((client->x - mon_x) + BORDERWIDTH
                                      * 2);
     }
 
-    if (client->y + client->height + conf.borderwidth * 2 > mon_y + mon_height)
+    if (client->y + client->height + BORDERWIDTH * 2 > mon_y + mon_height)
     {
-        client->height = mon_height - ((client->y - mon_y) + conf.borderwidth
+        client->height = mon_height - ((client->y - mon_y) + BORDERWIDTH
                                        * 2);
     }
 
@@ -2405,64 +2395,64 @@ static void snapwindow(struct client *client, int snap_mode)
 
         if (snap_mode == MCWM_MOVE)
         {
-            if (abs((win->x +win->width) - client->x) < conf.snapmargin)
+            if (abs((win->x +win->width) - client->x) < SNAPMARGIN)
             {
                 if (client->y + client->height > win->y
                     && client->y < win->y + win->height)
                 {
-                    client->x = (win->x + win->width) + (2 * conf.borderwidth);
+                    client->x = (win->x + win->width) + (2 * BORDERWIDTH);
                 }
             }
 
-            if (abs((win->y +win->height) - client->y) < conf.snapmargin)
+            if (abs((win->y +win->height) - client->y) < SNAPMARGIN)
             {
                 if (client->x + client->width >win->x
                     && client->x < win->x + win->width)
                 {
-                    client->y = (win->y + win->height) + (2 * conf.borderwidth);
+                    client->y = (win->y + win->height) + (2 * BORDERWIDTH);
                 }
             }
 
-            if (abs((client->x + client->width) - win->x) < conf.snapmargin)
+            if (abs((client->x + client->width) - win->x) < SNAPMARGIN)
             {
                 if (client->y + client->height > win->y
                     && client->y < win->y + win->height)
                 {
                     client->x = (win->x - client->width)
-                        - (2 * conf.borderwidth);
+                        - (2 * BORDERWIDTH);
                 }
             }
 
-            if (abs((client->y + client->height) - win->y) < conf.snapmargin)
+            if (abs((client->y + client->height) - win->y) < SNAPMARGIN)
             {
                 if (client->x + client->width >win->x
                     && client->x < win->x + win->width)
                 {
                     client->y = (win->y - client->height)
-                        - (2 * conf.borderwidth);
+                        - (2 * BORDERWIDTH);
                 }
             }
 
         } /* mcwm_move */
         else if (snap_mode == MCWM_RESIZE)
         {
-            if (abs((client->x + client->width) - win->x) < conf.snapmargin)
+            if (abs((client->x + client->width) - win->x) < SNAPMARGIN)
             {
                 if (client->y + client->height > win->y
                     && client->y < win->y + win->height)
                 {
                     client->width = (win->x - client->x)
-                        - (2 * conf.borderwidth);
+                        - (2 * BORDERWIDTH);
                 }
             }
 
-            if (abs((client->y + client->height) - win->y) < conf.snapmargin)
+            if (abs((client->y + client->height) - win->y) < SNAPMARGIN)
             {
                 if (client->x + client->width >win->x
                     && client->x < win->x + win->width)
                 {
                     client->height = (win->y - client->y)
-                        - (2 * conf.borderwidth);
+                        - (2 * BORDERWIDTH);
                 }
             }
         } /* mcwm_resize */
@@ -2471,33 +2461,33 @@ static void snapwindow(struct client *client, int snap_mode)
     /* monitor border */
     if (snap_mode == MCWM_MOVE) {
 
-        if (abs(client->x - mon_x) < conf.snapmargin)
+        if (abs(client->x - mon_x) < SNAPMARGIN)
         {
             client->x = mon_x;
         }
 
-        if (abs(client->y - mon_y) < conf.snapmargin)
+        if (abs(client->y - mon_y) < SNAPMARGIN)
         {
             client->y = mon_y;
         }
 
-        if (abs((client->x + client->width) - mon_width) < conf.snapmargin)
+        if (abs((client->x + client->width) - mon_width) < SNAPMARGIN)
         {
             client->x = (mon_width - client->width);
         }
 
-        if (abs((client->y + client->height) - mon_height) < conf.snapmargin)
+        if (abs((client->y + client->height) - mon_height) < SNAPMARGIN)
         {
             client->y = (mon_height - client->height);
         }
     }
     else if (snap_mode == MCWM_RESIZE)
     {
-        if (abs((client->width + client->x) - mon_width) < conf.snapmargin)
+        if (abs((client->width + client->x) - mon_width) < SNAPMARGIN)
         {
             client->width = mon_width;
         }
-        if (abs((client->height + client->y) - mon_height) < conf.snapmargin)
+        if (abs((client->height + client->y) - mon_height) < SNAPMARGIN)
         {
             client->height = mon_height;
         }
@@ -2513,7 +2503,7 @@ void mousemove(struct client *client, int rel_x, int rel_y)
     client->x = rel_x;
     client->y = rel_y;
 
-    if (conf.snapmargin > 0)
+    if (SNAPMARGIN > 0)
     {
         snapwindow(client, MCWM_MOVE);
     }
@@ -2535,7 +2525,7 @@ void mouseresize(struct client *client, int rel_x, int rel_y)
            (client->width - client->base_width) / client->width_inc,
            (client->height - client->base_height) / client->height_inc);
 
-    if (conf.snapmargin > 0)
+    if (SNAPMARGIN > 0)
     {
         snapwindow(client, MCWM_RESIZE);
     }
@@ -2601,9 +2591,9 @@ void movestep(struct client *client, char direction)
      * If the pointer was inside the window to begin with, move
      * pointer back to where it was, relative to the window.
      */
-    if (start_x > 0 - conf.borderwidth && start_x < client->width
-        + conf.borderwidth && start_y > 0 - conf.borderwidth && start_y
-        < client->height + conf.borderwidth)
+    if (start_x > 0 - BORDERWIDTH && start_x < client->width
+        + BORDERWIDTH && start_y > 0 - BORDERWIDTH && start_y
+        < client->height + BORDERWIDTH)
     {
         xcb_warp_pointer(conn, XCB_NONE, client->id, 0, 0, 0, 0,
                          start_x, start_y);
@@ -2648,7 +2638,7 @@ void unmax(struct client *client)
         values[3] = client->height;
 
         /* Set borders again. */
-        values[4] = conf.borderwidth;
+        values[4] = BORDERWIDTH;
 
         mask =
             XCB_CONFIG_WINDOW_X
@@ -2799,7 +2789,7 @@ void maxvert(struct client *client)
 
     client->y = mon_y;
     /* Compute new height considering height increments and screen height. */
-    client->height = mon_height - conf.borderwidth * 2;
+    client->height = mon_height - BORDERWIDTH * 2;
     client->height -= (client->height - client->base_height)
         % client->height_inc;
 
@@ -2944,7 +2934,7 @@ void topright(void)
     }
 
     focuswin->x = mon_x + mon_width -
-        (focuswin->width + conf.borderwidth * 2);
+        (focuswin->width + BORDERWIDTH * 2);
 
     focuswin->y = mon_y;
 
@@ -2989,7 +2979,7 @@ void botleft(void)
     }
 
     focuswin->x = mon_x;
-    focuswin->y = mon_y + mon_height - (focuswin->height + conf.borderwidth
+    focuswin->y = mon_y + mon_height - (focuswin->height + BORDERWIDTH
                                         * 2);
     movewindow(focuswin->id, focuswin->x, focuswin->y);
     xcb_warp_pointer(conn, XCB_NONE, focuswin->id, 0, 0, 0, 0,
@@ -3033,8 +3023,8 @@ void botright(void)
         return;
     }
 
-    focuswin->x = mon_x + mon_width - (focuswin->width + conf.borderwidth * 2);
-    focuswin->y = mon_y + mon_height - (focuswin->height + conf.borderwidth
+    focuswin->x = mon_x + mon_width - (focuswin->width + BORDERWIDTH * 2);
+    focuswin->y = mon_y + mon_height - (focuswin->height + BORDERWIDTH
                                         * 2);
     movewindow(focuswin->id, focuswin->x, focuswin->y);
     xcb_warp_pointer(conn, XCB_NONE, focuswin->id, 0, 0, 0, 0,
@@ -3214,7 +3204,7 @@ void handle_keypress(xcb_key_press_event_t *ev)
         switch (key)
         {
         case KEY_RET: /* return */
-            start(conf.terminal);
+            start(TERMINAL);
             break;
 
         case KEY_F: /* f */
@@ -3326,7 +3316,7 @@ void handle_keypress(xcb_key_press_event_t *ev)
             break;
 
         case KEY_ICONIFY:
-            if (conf.allowicons)
+            if (ALLOWICONS)
             {
                 hide(focuswin);
             }
@@ -3522,7 +3512,7 @@ void configurerequest(xcb_configure_request_event_t *e)
 
         /* Check if window fits on screen after resizing. */
 
-        if (client->x + client->width + 2 * conf.borderwidth
+        if (client->x + client->width + 2 * BORDERWIDTH
             > mon_x + mon_width)
         {
             /*
@@ -3530,7 +3520,7 @@ void configurerequest(xcb_configure_request_event_t *e)
              * right edge of the screen.
              */
             client->x = mon_x + mon_width
-                - (client->width + 2 * conf.borderwidth);
+                - (client->width + 2 * BORDERWIDTH);
 
             /*
              * If we moved over the left screen edge, move back and
@@ -3539,11 +3529,11 @@ void configurerequest(xcb_configure_request_event_t *e)
             if (client->x < mon_x)
             {
                 client->x = mon_x;
-                client->width = mon_width - 2 * conf.borderwidth;
+                client->width = mon_width - 2 * BORDERWIDTH;
             }
         }
 
-        if (client->y + client->height + 2 * conf.borderwidth
+        if (client->y + client->height + 2 * BORDERWIDTH
             > mon_y + mon_height)
         {
             /*
@@ -3551,7 +3541,7 @@ void configurerequest(xcb_configure_request_event_t *e)
              * bottom edge.
              */
             client->y = mon_y + mon_height
-                - (client->height + 2 * conf.borderwidth);
+                - (client->height + 2 * BORDERWIDTH);
 
             /*
              * If we moved over the top screen edge, move back and fit
@@ -3561,7 +3551,7 @@ void configurerequest(xcb_configure_request_event_t *e)
             {
                 PDEBUG("over the edge: y < %d\n", mon_y);
                 client->y = mon_y;
-                client->height = mon_height - 2 * conf.borderwidth;
+                client->height = mon_height - 2 * BORDERWIDTH;
             }
         }
 
@@ -4149,7 +4139,7 @@ void events(void)
             xcb_client_message_event_t *e
                 = (xcb_client_message_event_t *)ev;
 
-            if (conf.allowicons)
+            if (ALLOWICONS)
             {
                 if (e->type == wm_change_state
                     && e->format == 32
@@ -4264,19 +4254,6 @@ void events(void)
     }
 }
 
-void printhelp(void)
-{
-    printf("mcwm: Usage: mcwm [-b] [-s snapmargin] [-t terminal-program] "
-           "[-f colour] [-u colour] [-x colour] \n");
-    printf("  -b means draw no borders\n");
-    printf("  -s snapmargin in pixels\n");
-    printf("  -t urxvt will start urxvt when MODKEY + Return is pressed\n");
-    printf("  -f colour sets colour for focused window borders of focused "
-           "to a named color.\n");
-    printf("  -u colour sets colour for unfocused window borders.\n");
-    printf("  -x color sets colour for fixed window borders.\n");
-}
-
 void sigcatch(int sig)
 {
     sigcode = sig;
@@ -4307,17 +4284,13 @@ xcb_atom_t getatom(char *atom_name)
     return 0;
 }
 
-int main(int argc, char **argv)
+int main()
 {
     uint32_t mask = 0;
     uint32_t values[2];
-    int ch;                    /* Option character */
     xcb_void_cookie_t cookie;
     xcb_generic_error_t *error;
     xcb_drawable_t root;
-    char *focuscol;
-    char *unfocuscol;
-    char *fixedcol;
     int scrno;
     xcb_screen_iterator_t iter;
 
@@ -4340,64 +4313,6 @@ int main(int argc, char **argv)
     {
         perror("mcwm: signal");
         exit(1);
-    }
-
-    /* Set up defaults. */
-
-    conf.borderwidth = BORDERWIDTH;
-    conf.snapmargin = SNAPMARGIN;
-    conf.terminal = TERMINAL;
-    conf.allowicons = ALLOWICONS;
-    focuscol = FOCUSCOL;
-    unfocuscol = UNFOCUSCOL;
-    fixedcol = FIXEDCOL;
-
-    while (1)
-    {
-        ch = getopt(argc, argv, "b:s:it:f:u:x:");
-        if (-1 == ch)
-        {
-
-            /* No more options, break out of while loop. */
-            break;
-        }
-
-        switch (ch)
-        {
-        case 'b':
-            /* Border width */
-            conf.borderwidth = atoi(optarg);
-            break;
-
-        case 's':
-            /* Snap margin */
-            conf.snapmargin = atoi(optarg);
-            break;
-
-        case 'i':
-            conf.allowicons = true;
-            break;
-
-        case 't':
-            conf.terminal = optarg;
-            break;
-
-        case 'f':
-            focuscol = optarg;
-            break;
-
-        case 'u':
-            unfocuscol = optarg;
-            break;
-
-        case 'x':
-            fixedcol = optarg;
-            break;
-
-        default:
-            printhelp();
-            exit(0);
-        } /* switch */
     }
 
     /*
@@ -4432,9 +4347,9 @@ int main(int argc, char **argv)
            screen->height_in_pixels, screen->root);
 
     /* Get some colours. */
-    conf.focuscol = getcolor(focuscol);
-    conf.unfocuscol = getcolor(unfocuscol);
-    conf.fixedcol = getcolor(fixedcol);
+    focuscol = getcolor(FOCUSCOL);
+    unfocuscol = getcolor(UNFOCUSCOL);
+    fixedcol = getcolor(FIXEDCOL);
 
     /* Get some atoms. */
     atom_desktop = getatom("_NET_WM_DESKTOP");
