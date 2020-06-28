@@ -56,3 +56,6 @@ clean:
 
 distclean: clean
 	$(RM) -f $(DIST).tar.bz2
+
+format:
+	uncrustify -c uncrustify.cfg -l C --replace --no-backup -q *.c *.h

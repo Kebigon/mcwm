@@ -64,14 +64,14 @@
 
 #ifdef DEBUG
 #define PDEBUG(Args...) \
-  do { fprintf(stderr, "mcwm: "); fprintf(stderr, ##Args); } while(0)
+    do { fprintf(stderr, "mcwm: "); fprintf(stderr, ## Args); } while(0)
 #define D(x) x
 #else
 #define PDEBUG(Args...)
 #define D(x)
 #endif
 
-
+
 /* Internal Constants. */
 
 /* We're currently moving a window with the mouse. */
@@ -95,7 +95,7 @@
 /* This means we didn't get any window hint at all. */
 #define MCWM_NOWS 0xfffffffe
 
-
+
 /* Types. */
 
 /* All our key shortcuts. */
@@ -173,22 +173,22 @@ struct client
     struct monitor *monitor;    /* The physical output this window is on. */
     struct item *winitem; /* Pointer to our place in global windows list. */
     struct item *wsitem[WORKSPACES]; /* Pointer to our place in every
-                                             * workspace window list. */
+                                      * workspace window list. */
 };
 
 /* Window configuration data. */
 struct winconf
 {
-    int16_t      x;
-    int16_t      y;
-    uint16_t     width;
-    uint16_t     height;
-    uint8_t      stackmode;
+    int16_t x;
+    int16_t y;
+    uint16_t width;
+    uint16_t height;
+    uint8_t stackmode;
     xcb_window_t sibling;
-    uint16_t     borderwidth;
+    uint16_t borderwidth;
 };
 
-
+
 /* Globals */
 
 int sigcode;                    /* Signal code. Non-zero if we've been
@@ -298,7 +298,7 @@ xcb_atom_t wm_change_state;
 xcb_atom_t wm_state;
 xcb_atom_t wm_protocols;        /* WM_PROTOCOLS.  */
 
-
+
 /* Functions declerations. */
 
 static void finishtabbing(void);
@@ -374,7 +374,7 @@ static void printhelp(void);
 static void sigcatch(int sig);
 static xcb_atom_t getatom(char *atom_name);
 
-
+
 /* Function bodies. */
 
 /*
@@ -1062,7 +1062,7 @@ void newwin(xcb_window_t win)
     /* Declare window normal. */
     long data[] = { XCB_ICCCM_WM_STATE_NORMAL, XCB_NONE };
     xcb_change_property(conn, XCB_PROP_MODE_REPLACE, client->id,
-                              wm_state, wm_state, 32, 2, data);
+                        wm_state, wm_state, 32, 2, data);
 
     /*
      * Move cursor into the middle of the window so we don't lose the
@@ -1379,7 +1379,7 @@ int setupscreen(void)
                 if (-1 != randrbase)
                 {
                     PDEBUG("Looking for monitor on %d x %d.\n", client->x,
-                        client->y);
+                           client->y);
                     client->monitor = findmonbycoord(client->x, client->y);
 #if DEBUG
                     if (NULL != client->monitor)
@@ -1560,7 +1560,7 @@ void getoutputs(xcb_randr_output_t *outputs, int len, xcb_timestamp_t timestamp)
                  xcb_randr_get_output_info_name(output));
 
         PDEBUG("Name: %s\n", name);
-        PDEBUG("id: %d\n" , outputs[i]);
+        PDEBUG("id: %d\n", outputs[i]);
         PDEBUG("Size: %d x %d mm.\n", output->mm_width, output->mm_height);
 
         if (XCB_NONE != output->crtc)
@@ -3032,8 +3032,8 @@ void botright(void)
     }
 
     focuswin->x = mon_x + mon_width - (focuswin->width + conf.borderwidth * 2);
-    focuswin->y =  mon_y + mon_height - (focuswin->height + conf.borderwidth
-                                         * 2);
+    focuswin->y = mon_y + mon_height - (focuswin->height + conf.borderwidth
+                                        * 2);
     movewindow(focuswin->id, focuswin->x, focuswin->y);
     xcb_warp_pointer(conn, XCB_NONE, focuswin->id, 0, 0, 0, 0,
                      pointx, pointy);
@@ -3061,7 +3061,7 @@ void deletewin(void)
         {
             if (protocols.atoms[i] == wm_delete_window)
             {
-                 use_delete = true;
+                use_delete = true;
             }
         }
     }
@@ -3071,12 +3071,12 @@ void deletewin(void)
     if (use_delete)
     {
         xcb_client_message_event_t ev = {
-          .response_type = XCB_CLIENT_MESSAGE,
-          .format = 32,
-          .sequence = 0,
-          .window = focuswin->id,
-          .type = wm_protocols,
-          .data.data32 = { wm_delete_window, XCB_CURRENT_TIME }
+            .response_type = XCB_CLIENT_MESSAGE,
+            .format = 32,
+            .sequence = 0,
+            .window = focuswin->id,
+            .type = wm_protocols,
+            .data.data32 = { wm_delete_window, XCB_CURRENT_TIME }
         };
 
         xcb_send_event(conn, false, focuswin->id,
@@ -3722,7 +3722,7 @@ void events(void)
 
             e = (xcb_button_press_event_t *) ev;
             PDEBUG("Button %d pressed in window %ld, subwindow %d "
-                    "coordinates (%d,%d)\n",
+                   "coordinates (%d,%d)\n",
                    e->detail, (long)e->event, e->child, e->event_x,
                    e->event_y);
 
@@ -3973,7 +3973,7 @@ void events(void)
                 mode = 0;
                 PDEBUG("mode now = %d\n", mode);
             }
-        break;
+            break;
 
         case XCB_KEY_PRESS:
         {
@@ -4136,7 +4136,7 @@ void events(void)
 
         case XCB_CONFIGURE_REQUEST:
             configurerequest((xcb_configure_request_event_t *) ev);
-        break;
+            break;
 
         case XCB_CLIENT_MESSAGE:
         {

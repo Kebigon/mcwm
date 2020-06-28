@@ -8,7 +8,7 @@
 
 #ifdef DEBUG
 #define PDEBUG(Args...) \
-  do { fprintf(stderr, "mcwm: "); fprintf(stderr, ##Args); } while(0)
+    do { fprintf(stderr, "mcwm: "); fprintf(stderr, ## Args); } while(0)
 #define D(x) x
 #else
 #define PDEBUG(Args...)
