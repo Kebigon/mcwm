@@ -104,12 +104,6 @@ this is also used to move windows between workspaces: First fix the
 window, change to the workspace you want, then unfix the window on the
 new workspace.
 .IP \(bu 2
-.B i
-iconify (or hide) window from the display. Only usable when mcwm has
-been started with -i. Currently there is no way to get a hidden window
-back. You have to use an external program such as a panel or the
-mcicon or 9icon script in the mcwm distribution.
-.IP \(bu 2
 .B 0\-9
 go to workspace n, 0-9.
 .IP \(bu 2
@@ -135,10 +129,7 @@ cursor. Of course, changing workspaces has nothing to do with the
 focused window.
 .PP
 If you don't like the default key bindings, border width, et cetera,
-look in the config.h file, change and recompile. In the config.h file
-you can also define mouse button actions on the root window. By
-default button 3 starts the command mcmenu. You can write your own
-mcmenu by using, for instance, 9menu, dmenu or ratmenu.
+look in the config.h file, change and recompile.
 .SH ENVIRONMENT
 .B mcwm\fP obeys the $DISPLAY variable.
 .SH STARTING

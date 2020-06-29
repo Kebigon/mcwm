@@ -32,12 +32,6 @@
 #define MENU "dmenu_run"
 
 /*
- * Do we allow windows to be iconified? Set to true if you want this
- * behaviour to be default. Can also be set by calling mcwm with -i.
- */
-#define ALLOWICONS false
-
-/*
  * Default colour on border for focused windows. Can be set from
  * command line with "-f colour".
  */
@@ -89,5 +83,4 @@
 #define USERKEY_DELETE          XK_End
 #define USERKEY_PREVSCREEN      XK_comma
 #define USERKEY_NEXTSCREEN      XK_period
-#define USERKEY_ICONIFY         XK_I
 #define USERKEY_MENU            XK_P

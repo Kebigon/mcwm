@@ -128,7 +128,6 @@ typedef enum {
     KEY_END,
     KEY_PREVSCR,
     KEY_NEXTSCR,
-    KEY_ICONIFY,
     KEY_PREVWS,
     KEY_NEXTWS,
     KEY_MENU,
@@ -263,7 +262,6 @@ struct keys
     { USERKEY_DELETE, 0 },
     { USERKEY_PREVSCREEN, 0 },
     { USERKEY_NEXTSCREEN, 0 },
-    { USERKEY_ICONIFY, 0 },
     { USERKEY_PREVWS, 0 },
     { USERKEY_NEXTWS, 0 },
     { USERKEY_MENU, 0 },
@@ -348,7 +346,6 @@ static void setborders(struct client *client, int width);
 static void unmax(struct client *client);
 static void maximize(struct client *client);
 static void maxvert(struct client *client);
-static void hide(struct client *client);
 static bool getpointer(xcb_drawable_t win, int16_t *x, int16_t *y);
 static bool getgeom(xcb_drawable_t win, int16_t *x, int16_t *y, uint16_t *width,
                     uint16_t *height);
@@ -2805,22 +2802,6 @@ void maxvert(struct client *client)
     client->vertmaxed = true;
 }
 
-void hide(struct client *client)
-{
-    long data[] = { XCB_ICCCM_WM_STATE_ICONIC, XCB_NONE };
-
-    /*
-     * Unmap window and declare iconic.
-     *
-     * Unmapping will generate an UnmapNotify event so we can forget
-     * about the window later.
-     */
-    xcb_unmap_window(conn, client->id);
-    xcb_change_property(conn, XCB_PROP_MODE_REPLACE, client->id,
-                        wm_state, wm_state, 32, 2, data);
-    xcb_flush(conn);
-}
-
 bool getpointer(xcb_drawable_t win, int16_t *x, int16_t *y)
 {
     xcb_query_pointer_reply_t *pointer;
@@ -3313,13 +3294,6 @@ void handle_keypress(xcb_key_press_event_t *ev)
 
         case KEY_NEXTSCR:
             nextscreen();
-            break;
-
-        case KEY_ICONIFY:
-            if (ALLOWICONS)
-            {
-                hide(focuswin);
-            }
             break;
 
         case KEY_PREVWS:
@@ -4107,30 +4081,6 @@ void events(void)
         case XCB_CONFIGURE_REQUEST:
             configurerequest((xcb_configure_request_event_t *) ev);
             break;
-
-        case XCB_CLIENT_MESSAGE:
-        {
-            xcb_client_message_event_t *e
-                = (xcb_client_message_event_t *)ev;
-
-            if (ALLOWICONS)
-            {
-                if (e->type == wm_change_state
-                    && e->format == 32
-                    && e->data.data32[0] == XCB_ICCCM_WM_STATE_ICONIC)
-                {
-                    long data[] = { XCB_ICCCM_WM_STATE_ICONIC, XCB_NONE };
-
-                    /* Unmap window and declare iconic. */
-
-                    xcb_unmap_window(conn, e->window);
-                    xcb_change_property(conn, XCB_PROP_MODE_REPLACE, e->window,
-                                        wm_state, wm_state, 32, 2, data);
-                    xcb_flush(conn);
-                }
-            }
-        }
-        break;
 
         case XCB_CIRCULATE_REQUEST:
         {
