@@ -3722,32 +3722,6 @@ void events(void)
                    e->detail, (long)e->event, e->child, e->event_x,
                    e->event_y);
 
-            if (0 == e->child)
-            {
-                /* Mouse click on root window. Start programs? */
-
-                switch (e->detail)
-                {
-                case 1: /* Mouse button one. */
-                    start(MOUSE1);
-                    break;
-
-                case 2: /* Middle mouse button. */
-                    start(MOUSE2);
-                    break;
-
-                case 3: /* Mouse button three. */
-                    start(MOUSE3);
-                    break;
-
-                default:
-                    break;
-                } /* switch */
-
-                /* Break out of event switch. */
-                break;
-            }
-
             /*
              * If we don't have any currently focused window, we can't
              * do anything. We don't want to do anything if the mouse
