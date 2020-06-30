@@ -24,7 +24,7 @@
  *
  * Can be set from command line with "-t program".
  */
-#define TERMINAL "urxvt"
+#define TERMINAL "alacritty"
 
 /*
  * Start this program when pressing MODKEY + USERKEY_MENU. Needs to be in $PATH.
