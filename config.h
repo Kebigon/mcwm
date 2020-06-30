@@ -17,12 +17,6 @@
 #define SHIFTMOD XCB_MOD_MASK_SHIFT
 
 /*
- * Modifier key to use with mouse buttons. Default Mod1, Meta on my
- * keyboard.
- */
-#define MOUSEMODKEY XCB_MOD_MASK_1
-
-/*
  * Start this program when pressing MODKEY + USERKEY_TERMINAL. Needs
  * to be in $PATH.
  *

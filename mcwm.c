@@ -4465,19 +4465,19 @@ int main(int argc, char **argv)
                     | XCB_EVENT_MASK_BUTTON_RELEASE,
                     XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, root, XCB_NONE,
                     1 /* left mouse button */,
-                    MOUSEMODKEY);
+                    MODKEY);
 
     xcb_grab_button(conn, 0, root, XCB_EVENT_MASK_BUTTON_PRESS
                     | XCB_EVENT_MASK_BUTTON_RELEASE,
                     XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, root, XCB_NONE,
                     2 /* middle mouse button */,
-                    MOUSEMODKEY);
+                    MODKEY);
 
     xcb_grab_button(conn, 0, root, XCB_EVENT_MASK_BUTTON_PRESS
                     | XCB_EVENT_MASK_BUTTON_RELEASE,
                     XCB_GRAB_MODE_ASYNC, XCB_GRAB_MODE_ASYNC, root, XCB_NONE,
                     3 /* right mouse button */,
-                    MOUSEMODKEY);
+                    MODKEY);
 
     /* Subscribe to events. */
     mask = XCB_CW_EVENT_MASK;
